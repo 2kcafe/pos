@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>2K Cafe - POS System (Staff & Admin Management)</title>
+    <title>2K Cafe - POS System (Menu Card Text & Layout Fixed)</title>
     <style>
         :root {
             --bg-color: #f8f9fa;
@@ -78,6 +78,7 @@
             overflow-x: auto;
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
+            flex-shrink: 0;
         }
         .cat-btn {
             padding: 10px 18px;
@@ -97,14 +98,14 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
 
-        /* Menu Section */
+        /* Menu Section (แก้ไขให้แสดงข้อความและชื่อเมนูครบถ้วน ไม่โดนบีบ) */
         .menu-section {
             flex: 1;
             padding: 16px;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 15px;
             align-content: start;
         }
@@ -119,17 +120,44 @@
             flex-direction: column;
             position: relative;
             transition: transform 0.1s;
+            height: 215px; /* ล็อกความสูงการ์ดให้พอดีสวยงาม */
         }
         .menu-item:active { transform: scale(0.96); border-color: var(--accent-gold); }
         .menu-item.out-of-stock { opacity: 0.5; cursor: not-allowed; filter: grayscale(80%); }
+        
         .stock-badge { position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.75); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 2; }
         .stock-badge.empty { background: #d32f2f; }
         .hh-badge { position: absolute; top: 8px; left: 8px; background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .cat-tag { font-size: 11px; color: #777; margin-bottom: 2px; }
-        .menu-item-img { width: 100%; height: 115px; object-fit: cover; background-color: #f1f3f5; }
-        .menu-item-info { padding: 10px; text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .menu-item h3 { font-size: 14px; margin-bottom: 4px; color: var(--primary-dark); line-height: 1.25; }
-        .menu-item p { color: var(--accent-gold); font-weight: bold; font-size: 15px; }
+        
+        .menu-item-img {
+            width: 100%;
+            height: 115px;
+            min-height: 115px;
+            object-fit: cover;
+            background-color: #f1f3f5;
+        }
+        .menu-item-info {
+            padding: 8px 10px;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+        .cat-tag { font-size: 10px; color: #777; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .menu-item h3 {
+            font-size: 13.5px;
+            font-weight: bold;
+            color: var(--primary-dark);
+            line-height: 1.25;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* อนุญาตให้แสดงชื่อได้สูงสุด 2บรรทัด */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .menu-item p { color: var(--accent-gold); font-weight: bold; font-size: 14.5px; margin-top: 2px; }
 
         /* Cart Section */
         .cart-section {
@@ -230,8 +258,9 @@
         @media (max-width: 1024px) {
             header { padding: 8px 15px; font-size: 18px; }
             .cart-section { width: 330px; }
-            .menu-section { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; padding: 12px; }
-            .menu-item-img { height: 100px; }
+            .menu-section { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 12px; padding: 12px; }
+            .menu-item-img { height: 100px; min-height: 100px; }
+            .menu-item { height: 200px; }
         }
 
         @media (max-width: 760px) {
@@ -624,7 +653,6 @@
 
         const getEl = (id) => document.getElementById(id);
 
-        // โหลดรายชื่อพนักงานจากความจำเครื่องตั้งแต่เปิดหน้าเว็บ
         function loadUsersDatabase() {
             const savedUsers = localStorage.getItem('cafe_users_db');
             if (savedUsers && savedUsers !== "undefined" && savedUsers !== "[]") {
@@ -947,8 +975,10 @@
                     <div class="stock-badge ${item.stock <= 0 ? 'empty' : ''}">📦 ${stockText}</div>
                     <img src="${imgUrl}" class="menu-item-img">
                     <div class="menu-item-info">
-                        <span class="cat-tag">${item.category || 'เครื่องดื่ม'}</span>
-                        <h3>${item.name}</h3>
+                        <div>
+                            <span class="cat-tag">${item.category || 'เครื่องดื่ม'}</span>
+                            <h3>${item.name}</h3>
+                        </div>
                         <p>${item.price.toLocaleString()} ₭</p>
                     </div>
                 `;
@@ -1208,139 +1238,6 @@
             getEl('receipt-modal').style.display = 'none';
         }
         
-        // ========================================================
-        // ระบบจัดการพนักงานและรหัสผ่าน (Admin Staff Management)
-        // ========================================================
-        function openStaffEditModal() {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            loadUsersDatabase();
-            tempStaffList = JSON.parse(JSON.stringify(usersDatabase));
-            renderStaffEditorRows();
-            getEl('staff-edit-modal').style.display = 'flex';
-        }
-
-        function closeStaffEditModal() {
-            getEl('staff-edit-modal').style.display = 'none';
-        }
-
-        function syncStaffInputsToTemp() {
-            for (let i = 0; i < tempStaffList.length; i++) {
-                if (getEl(`staff-id-${i}`)) {
-                    tempStaffList[i].id = getEl(`staff-id-${i}`).value.trim().toLowerCase();
-                    tempStaffList[i].pass = getEl(`staff-pass-${i}`).value.trim();
-                    tempStaffList[i].name = getEl(`staff-name-${i}`).value.trim();
-                    tempStaffList[i].role = getEl(`staff-role-${i}`).value;
-                }
-            }
-        }
-
-        function togglePassVisibility(idx) {
-            const passInput = getEl(`staff-pass-${idx}`);
-            if (passInput) {
-                passInput.type = passInput.type === 'password' ? 'text' : 'password';
-            }
-        }
-
-        function renderStaffEditorRows() {
-            const tbody = getEl('staff-editor-rows');
-            tbody.innerHTML = '';
-            tempStaffList.forEach((u, idx) => {
-                const isMainAdmin = (idx === 0 && u.role === 'admin');
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>
-                        <input type="text" value="${u.id}" id="staff-id-${idx}" placeholder="เช่น staff1" style="font-weight:bold; text-align:center;">
-                    </td>
-                    <td>
-                        <div style="display:flex; gap:4px; align-items:center;">
-                            <input type="text" value="${u.pass}" id="staff-pass-${idx}" placeholder="รหัสผ่าน" style="text-align:center;">
-                            <button type="button" onclick="togglePassVisibility(${idx})" style="padding:6px 8px; border:1px solid #ccc; background:#f8f9fa; border-radius:4px; cursor:pointer;" title="ซ่อน/แสดงรหัสผ่าน">👁️</button>
-                        </div>
-                    </td>
-                    <td>
-                        <input type="text" value="${u.name}" id="staff-name-${idx}" placeholder="ชื่อแสดงในบิล">
-                    </td>
-                    <td>
-                        <select id="staff-role-${idx}" ${isMainAdmin ? 'disabled' : ''} style="background:${u.role === 'admin' ? '#fff3e0' : '#f1f9ff'}; font-weight:bold;">
-                            <option value="staff" ${u.role === 'staff' ? 'selected' : ''}>👤 พนักงานขาย</option>
-                            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>🔑 แอดมิน (Admin)</option>
-                        </select>
-                    </td>
-                    <td>
-                        <button class="delete-item-btn" onclick="deleteStaffRow(${idx})" ${isMainAdmin ? 'disabled title="ห้ามลบบัญชีแอดมินหลัก"' : ''}>ลบ</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function addNewStaffRow() {
-            syncStaffInputsToTemp();
-            tempStaffList.push({
-                id: `staff${tempStaffList.length + 1}`,
-                pass: '1234',
-                name: 'พนักงานใหม่',
-                role: 'staff'
-            });
-            renderStaffEditorRows();
-        }
-
-        function deleteStaffRow(idx) {
-            syncStaffInputsToTemp();
-            const adminCount = tempStaffList.filter(u => u.role === 'admin').length;
-            if (tempStaffList[idx].role === 'admin' && adminCount <= 1) {
-                alert('⚠️ ไม่สามารถลบได้! ต้องมีบัญชีแอดมิน (Admin) อย่างน้อย 1 บัญชีในระบบครับ');
-                return;
-            }
-            if (confirm(`ต้องการลบบัญชี "${tempStaffList[idx].name}" ใช่หรือไม่?`)) {
-                tempStaffList.splice(idx, 1);
-                renderStaffEditorRows();
-            }
-        }
-
-        function saveEditedStaffData() {
-            syncStaffInputsToTemp();
-
-            // ตรวจสอบความถูกต้องของข้อมูล
-            const seenIds = new Set();
-            let hasAdmin = false;
-
-            for (let i = 0; i < tempStaffList.length; i++) {
-                const u = tempStaffList[i];
-                if (!u.id || !u.pass) {
-                    alert(`⚠️ กรุณากรอก ID และรหัสผ่านให้ครบทุกแถว (แถวที่ ${i + 1})`);
-                    return;
-                }
-                if (!u.name) {
-                    u.name = u.id;
-                }
-                if (seenIds.has(u.id)) {
-                    alert(`⚠️ ID "${u.id}" ซ้ำกัน! กรุณาตั้ง ID พนักงานให้ไม่ซ้ำกันครับ`);
-                    return;
-                }
-                seenIds.add(u.id);
-                if (u.role === 'admin') hasAdmin = true;
-            }
-
-            if (!hasAdmin) {
-                alert('⚠️ ต้องมีบัญชีที่เป็นสิทธิ์แอดมิน (Admin) อย่างน้อย 1 บัญชีครับ');
-                return;
-            }
-
-            usersDatabase = JSON.parse(JSON.stringify(tempStaffList));
-            localStorage.setItem('cafe_users_db', JSON.stringify(usersDatabase));
-
-            // อัปเดตชื่อผู้ใช้ปัจจุบันบนหน้าจอหากแก้ไขตัวเอง
-            if (currentUser) {
-                const updatedSelf = usersDatabase.find(u => u.id === currentUser.id) || usersDatabase[0];
-                currentUser = updatedSelf;
-                getEl('current-user-display').innerText = currentUser.name;
-            }
-
-            alert('✅ บันทึกข้อมูลพนักงานและรหัสผ่านเรียบร้อยแล้ว!');
-            closeStaffEditModal();
-        }
-
         // --- Date Range Filter Functions ---
         function setReportDateToday() {
             const today = getDateStr(new Date());
@@ -1537,6 +1434,135 @@
             } catch (e) {
                 alert('⚠️ พื้นที่ความจำเต็ม! กรุณากดปุ่มสีส้ม "⚡ บีบอัดรูปเก่าเพื่อคืนพื้นที่ว่าง" ด้านบนตาราง แล้วกดบันทึกอีกครั้งครับ');
             }
+        }
+
+        // --- Staff Management Modal ---
+        function openStaffEditModal() {
+            if (!currentUser || currentUser.role !== 'admin') return;
+            loadUsersDatabase();
+            tempStaffList = JSON.parse(JSON.stringify(usersDatabase));
+            renderStaffEditorRows();
+            getEl('staff-edit-modal').style.display = 'flex';
+        }
+
+        function closeStaffEditModal() {
+            getEl('staff-edit-modal').style.display = 'none';
+        }
+
+        function syncStaffInputsToTemp() {
+            for (let i = 0; i < tempStaffList.length; i++) {
+                if (getEl(`staff-id-${i}`)) {
+                    tempStaffList[i].id = getEl(`staff-id-${i}`).value.trim().toLowerCase();
+                    tempStaffList[i].pass = getEl(`staff-pass-${i}`).value.trim();
+                    tempStaffList[i].name = getEl(`staff-name-${i}`).value.trim();
+                    tempStaffList[i].role = getEl(`staff-role-${i}`).value;
+                }
+            }
+        }
+
+        function togglePassVisibility(idx) {
+            const passInput = getEl(`staff-pass-${idx}`);
+            if (passInput) {
+                passInput.type = passInput.type === 'password' ? 'text' : 'password';
+            }
+        }
+
+        function renderStaffEditorRows() {
+            const tbody = getEl('staff-editor-rows');
+            tbody.innerHTML = '';
+            tempStaffList.forEach((u, idx) => {
+                const isMainAdmin = (idx === 0 && u.role === 'admin');
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <input type="text" value="${u.id}" id="staff-id-${idx}" placeholder="เช่น staff1" style="font-weight:bold; text-align:center;">
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                            <input type="text" value="${u.pass}" id="staff-pass-${idx}" placeholder="รหัสผ่าน" style="text-align:center;">
+                            <button type="button" onclick="togglePassVisibility(${idx})" style="padding:6px 8px; border:1px solid #ccc; background:#f8f9fa; border-radius:4px; cursor:pointer;" title="ซ่อน/แสดงรหัสผ่าน">👁️</button>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="text" value="${u.name}" id="staff-name-${idx}" placeholder="ชื่อแสดงในบิล">
+                    </td>
+                    <td>
+                        <select id="staff-role-${idx}" ${isMainAdmin ? 'disabled' : ''} style="background:${u.role === 'admin' ? '#fff3e0' : '#f1f9ff'}; font-weight:bold;">
+                            <option value="staff" ${u.role === 'staff' ? 'selected' : ''}>👤 พนักงานขาย</option>
+                            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>🔑 แอดมิน (Admin)</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="delete-item-btn" onclick="deleteStaffRow(${idx})" ${isMainAdmin ? 'disabled title="ห้ามลบบัญชีแอดมินหลัก"' : ''}>ลบ</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function addNewStaffRow() {
+            syncStaffInputsToTemp();
+            tempStaffList.push({
+                id: `staff${tempStaffList.length + 1}`,
+                pass: '1234',
+                name: 'พนักงานใหม่',
+                role: 'staff'
+            });
+            renderStaffEditorRows();
+        }
+
+        function deleteStaffRow(idx) {
+            syncStaffInputsToTemp();
+            const adminCount = tempStaffList.filter(u => u.role === 'admin').length;
+            if (tempStaffList[idx].role === 'admin' && adminCount <= 1) {
+                alert('⚠️ ไม่สามารถลบได้! ต้องมีบัญชีแอดมิน (Admin) อย่างน้อย 1 บัญชีในระบบครับ');
+                return;
+            }
+            if (confirm(`ต้องการลบบัญชี "${tempStaffList[idx].name}" ใช่หรือไม่?`)) {
+                tempStaffList.splice(idx, 1);
+                renderStaffEditorRows();
+            }
+        }
+
+        function saveEditedStaffData() {
+            syncStaffInputsToTemp();
+
+            const seenIds = new Set();
+            let hasAdmin = false;
+
+            for (let i = 0; i < tempStaffList.length; i++) {
+                const u = tempStaffList[i];
+                if (!u.id || !u.pass) {
+                    alert(`⚠️ กรุณากรอก ID และรหัสผ่านให้ครบทุกแถว (แถวที่ ${i + 1})`);
+                    return;
+                }
+                if (!u.name) {
+                    u.name = u.id;
+                }
+                if (seenIds.has(u.id)) {
+                    alert(`⚠️ ID "${u.id}" ซ้ำกัน! กรุณาตั้ง ID พนักงานให้ไม่ซ้ำกันครับ`);
+                    return;
+                }
+                seenIds.add(u.id);
+                if (u.role === 'admin') hasAdmin = true;
+            }
+
+            if (!hasAdmin) {
+                alert('⚠️ ต้องมีบัญชีที่เป็นสิทธิ์แอดมิน (Admin) อย่างน้อย 1 บัญชีครับ');
+                return;
+            }
+
+            usersDatabase = JSON.parse(JSON.stringify(tempStaffList));
+            localStorage.setItem('cafe_users_db', JSON.stringify(usersDatabase));
+
+            if (currentUser) {
+                const updatedSelf = usersDatabase.find(u => u.id === currentUser.id) || usersDatabase[0];
+                currentUser = updatedSelf;
+                getEl('current-user-display').innerText = currentUser.name;
+            }
+
+            alert('✅ บันทึกข้อมูลพนักงานและรหัสผ่านเรียบร้อยแล้ว!');
+            closeStaffEditModal();
         }
     </script>
 </body>
